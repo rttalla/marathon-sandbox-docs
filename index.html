@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Marathon — Client Onboarding</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; }
+
+    :root {
+      --bg: #0d0d0d;
+      --bg-card: #181818;
+      --bg-card2: #1f1f1f;
+      --border: rgba(255,255,255,0.07);
+      --border-mid: rgba(255,255,255,0.11);
+      --teal: #00c48c;
+      --teal-dim: rgba(0,196,140,0.15);
+      --amber: #f59e0b;
+      --amber-dim: rgba(245,158,11,0.14);
+      --amber-lite: #fbbf24;
+      --slate: #9ca3af;
+      --slate-dim: #6b7280;
+      --white: #ffffff;
+      --red: #ef4444;
+      --green: #22c55e;
+      --purple: #a855f7;
+      --blue: #3b82f6;
+      --r-sm: 6px;
+      --r-md: 10px;
+      --r-lg: 16px;
+      --r-xl: 22px;
+      --ease: cubic-bezier(0.4,0,0.2,1);
+    }
+
+    body {
+      background: var(--bg);
+      color: #e5e7eb;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* ─── PASSWORD GATE ─────────────────────────────────────── */
+    #gate {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      background: #0d0d0d;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .gate-card {
+      background: #141414;
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 20px;
+      padding: 2.75rem 2.5rem;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.6);
+    }
+
+    .gate-logo {
+      width: 52px;
+      height: 52px;
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      border-radius: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 1.5rem;
+      color: #0d0d0d;
+      margin: 0 auto 1.25rem;
+      box-shadow: 0 6px 28px rgba(245,158,11,0.3);
+    }
+
+    .gate-title {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.4rem;
+    }
+
+    .gate-sub {
+      font-size: 0.85rem;
+      color: #6b7280;
+      margin-bottom: 2rem;
+      line-height: 1.55;
+    }
+
+    .gate-input-wrap {
+      position: relative;
+      margin-bottom: 0.85rem;
+    }
+
+    .gate-input {
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 0.75rem 3rem 0.75rem 1rem;
+      color: #ffffff;
+      font-family: inherit;
+      font-size: 0.95rem;
+      letter-spacing: 0.08em;
+      outline: none;
+      transition: border-color 0.2s, background 0.2s;
+      text-align: center;
+    }
+
+    .gate-input:focus {
+      border-color: rgba(245,158,11,0.45);
+      background: rgba(245,158,11,0.04);
+    }
+
+    .gate-input.error {
+      border-color: rgba(239,68,68,0.5);
+      background: rgba(239,68,68,0.05);
+      animation: shake 0.35s var(--ease);
+    }
+
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20%      { transform: translateX(-6px); }
+      40%      { transform: translateX(6px); }
+      60%      { transform: translateX(-4px); }
+      80%      { transform: translateX(4px); }
+    }
+
+    .gate-eye {
+      position: absolute;
+      right: 0.9rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #6b7280;
+      padding: 0.25rem;
+      transition: color 0.2s;
+      display: flex;
+      align-items: center;
+    }
+    .gate-eye:hover { color: #9ca3af; }
+
+    .gate-error {
+      font-size: 0.78rem;
+      color: #f87171;
+      min-height: 1.2rem;
+      margin-bottom: 0.75rem;
+      transition: opacity 0.2s;
+    }
+
+    .gate-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #f59e0b, #fbbf24);
+      color: #0d0d0d;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 700;
+      padding: 0.8rem;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 18px rgba(245,158,11,0.3);
+      letter-spacing: 0.01em;
+    }
+
+    .gate-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(245,158,11,0.4); }
+    .gate-btn:active { transform: translateY(0); }
+
+    .gate-hint {
+      margin-top: 1.25rem;
+      font-size: 0.74rem;
+      color: #4b5563;
+    }
+
+    /* Hide app until unlocked */
+    #app { display: none; }
+
+    /* ─── TOP BAR ──────────────────────────────────────────── */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .topbar-row1 {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      height: 48px;
+      gap: 1.5rem;
+    }
+
+    .brand {
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--teal);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .progress-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      max-width: 680px;
+    }
+
+    .progress-label {
+      font-size: 0.72rem;
+      color: var(--slate);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .progress-track {
+      flex: 1;
+      height: 5px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--teal), #00e5a6);
+      border-radius: 99px;
+      transition: width 0.5s var(--ease);
+      width: 0%;
+    }
+
+    .progress-pct {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--teal);
+      white-space: nowrap;
+      flex-shrink: 0;
+      min-width: 30px;
+      text-align: right;
+    }
+
+    .progress-side {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.72rem;
+      color: var(--slate);
+      flex-shrink: 0;
+      cursor: default;
+    }
+
+    /* ─── TAB NAV ──────────────────────────────────────────── */
+    .tab-nav {
+      display: flex;
+      align-items: stretch;
+      padding: 0 2rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .tab-nav::-webkit-scrollbar { display: none; }
+
+    .tab-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0 1rem;
+      height: 44px;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--slate-dim);
+      white-space: nowrap;
+      transition: color 0.2s, border-color 0.2s;
+      flex-shrink: 0;
+    }
+
+    .tab-btn:hover { color: #cbd5e1; }
+    .tab-btn.active { color: var(--white); border-bottom-color: var(--amber); }
+    .tab-btn.done   { color: var(--slate); }
+
+    .tab-dot {
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      border: 1.5px solid currentColor;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .tab-btn.done .tab-dot { background: var(--teal); border-color: var(--teal); }
+    .tab-btn.active .tab-dot { border-color: var(--amber); }
+
+    .tab-check { display: none; }
+    .tab-btn.done .tab-check { display: block; }
+    .tab-btn.done .tab-inner-dot { display: none; }
+
+    .tab-inner-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0;
+    }
+    .tab-btn.active .tab-inner-dot { opacity: 1; background: var(--amber); }
+
+    /* ─── PANELS ───────────────────────────────────────────── */
+    .panels { min-height: calc(100vh - 92px); }
+
+    .panel {
+      display: none;
+      padding: 3.5rem 2rem 5rem;
+      max-width: 1100px;
+      margin: 0 auto;
+      animation: fadeUp 0.35s var(--ease);
+    }
+    .panel.active { display: block; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── SHARED ───────────────────────────────────────────── */
+    .section-eyebrow {
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--amber); margin-bottom: 0.5rem;
+    }
+    .section-heading {
+      font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 800; color: var(--white);
+      letter-spacing: -0.025em; line-height: 1.15; margin-bottom: 0.75rem;
+    }
+    .section-sub {
+      font-size: 1rem; color: var(--slate); max-width: 560px;
+      line-height: 1.7; margin-bottom: 2.5rem;
+    }
+    .amber-line {
+      width: 40px; height: 3px;
+      background: linear-gradient(90deg, var(--amber), var(--amber-lite));
+      border-radius: 2px; margin-bottom: 1rem;
+    }
+    .panel-nav {
+      display: flex; justify-content: flex-end;
+      margin-top: 3rem; padding-top: 2rem;
+      border-top: 1px solid var(--border);
+    }
+    .btn-next {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: transparent; color: var(--amber-lite);
+      border: 1px solid rgba(245,158,11,0.3); font-family: inherit;
+      font-size: 0.84rem; font-weight: 600; padding: 0.65rem 1.25rem;
+      border-radius: var(--r-md); cursor: pointer; transition: all 0.2s;
+    }
+    .btn-next:hover { background: var(--amber-dim); border-color: rgba(245,158,11,0.5); color: var(--white); }
+
+    /* ─── PANEL 1 ──────────────────────────────────────────── */
+    .hero-logo { display: flex; align-items: center; gap: 0.9rem; margin-bottom: 2rem; }
+    .hero-logo-mark {
+      width: 52px; height: 52px;
+      background: linear-gradient(135deg, var(--amber-lite), var(--amber));
+      border-radius: 13px; display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: 1.5rem; color: #0d0d0d;
+      box-shadow: 0 6px 28px rgba(245,158,11,0.3); flex-shrink: 0;
+    }
+    .hero-logo-name { font-size: 2rem; font-weight: 900; color: var(--white); letter-spacing: -0.03em; }
+    .hero-headline {
+      font-size: clamp(2.2rem, 5vw, 3.4rem); font-weight: 800; color: var(--white);
+      line-height: 1.1; letter-spacing: -0.025em; margin-bottom: 1.1rem; max-width: 800px;
+    }
+    .hero-headline .grad {
+      background: linear-gradient(90deg, #fcd34d, var(--amber));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .hero-sub { font-size: 1.05rem; color: var(--slate); max-width: 580px; line-height: 1.75; margin-bottom: 2.5rem; }
+    .welcome-card {
+      display: flex; gap: 1rem; align-items: flex-start;
+      background: var(--bg-card); border: 1px solid var(--border-mid);
+      border-radius: var(--r-xl); padding: 1.4rem 1.75rem; max-width: 600px; margin-bottom: 3rem;
+    }
+    .welcome-emoji { font-size: 1.4rem; flex-shrink: 0; margin-top: 0.1rem; }
+    .welcome-card p { font-size: 0.95rem; color: #d1d5db; line-height: 1.65; }
+    .welcome-card strong { color: var(--white); }
+    .intro-stats {
+      display: flex; gap: 1px; background: var(--border);
+      border-radius: var(--r-lg); overflow: hidden; max-width: 520px;
+    }
+    .intro-stat { flex: 1; background: var(--bg-card); padding: 1.25rem 1.5rem; text-align: center; }
+    .intro-stat-num {
+      font-size: 1.75rem; font-weight: 800; letter-spacing: -0.03em;
+      background: linear-gradient(90deg, #fcd34d, var(--amber));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .intro-stat-label { font-size: 0.75rem; color: var(--slate); margin-top: 0.2rem; }
+
+    /* ─── PANEL 2 ──────────────────────────────────────────── */
+    .module-controls { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 2rem; }
+    .mod-toggle {
+      display: inline-flex; align-items: center; gap: 0.45rem;
+      padding: 0.4rem 0.85rem; border-radius: 99px;
+      border: 1px solid var(--border-mid); background: transparent;
+      font-family: inherit; font-size: 0.76rem; font-weight: 600; color: var(--slate); cursor: pointer; transition: all 0.2s;
+    }
+    .mod-toggle.on { background: var(--amber-dim); border-color: rgba(245,158,11,0.35); color: var(--amber-lite); }
+    .mod-toggle .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.7; }
+    .mod-toggle.on .dot { opacity: 1; box-shadow: 0 0 5px var(--amber); }
+    .modules-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(440px, 1fr)); gap: 1.25rem; }
+    @media (max-width: 700px) { .modules-grid { grid-template-columns: 1fr; } }
+    .mod-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--r-xl); overflow: hidden; transition: opacity 0.3s, transform 0.3s, border-color 0.2s;
+    }
+    .mod-card:hover:not(.off) { border-color: rgba(245,158,11,0.18); transform: translateY(-2px); }
+    .mod-card.off { opacity: 0.3; pointer-events: none; }
+    .mod-stripe { height: 3px; }
+    [data-mod="software"] .mod-stripe { background: linear-gradient(90deg, var(--blue), #06b6d4); }
+    [data-mod="funnel"]   .mod-stripe { background: linear-gradient(90deg, var(--amber), #f97316); }
+    [data-mod="creative"] .mod-stripe { background: linear-gradient(90deg, var(--purple), #ec4899); }
+    [data-mod="geo"]      .mod-stripe { background: linear-gradient(90deg, var(--teal), #22d3ee); }
+    .mod-body { padding: 1.5rem 1.75rem 1.75rem; }
+    .mod-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.1rem; }
+    .mod-icon { width: 42px; height: 42px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+    [data-mod="software"] .mod-icon { background: rgba(59,130,246,0.14); }
+    [data-mod="funnel"]   .mod-icon { background: rgba(245,158,11,0.14); }
+    [data-mod="creative"] .mod-icon { background: rgba(168,85,247,0.14); }
+    [data-mod="geo"]      .mod-icon { background: rgba(0,196,140,0.14); }
+    .mod-badge { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.28rem 0.65rem; border-radius: 99px; }
+    .mod-badge.on  { background: rgba(34,197,94,0.12); color: #4ade80; border: 1px solid rgba(34,197,94,0.22); }
+    .mod-badge.off { background: rgba(107,114,128,0.1); color: var(--slate-dim); border: 1px solid var(--border); }
+    .mod-title { font-size: 1.1rem; font-weight: 700; color: var(--white); margin-bottom: 0.35rem; }
+    .mod-desc  { font-size: 0.86rem; color: var(--slate); line-height: 1.65; margin-bottom: 1.4rem; }
+    .mod-rows  { display: flex; flex-direction: column; gap: 0.75rem; }
+    .mod-row   { background: var(--bg-card2); border-radius: var(--r-md); padding: 0.9rem 1rem; border: 1px solid var(--border); }
+    .mod-row-lbl { font-size: 0.64rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--slate-dim); margin-bottom: 0.35rem; }
+    .mod-row-val { font-size: 0.84rem; color: #d1d5db; line-height: 1.6; }
+
+    /* ─── PANEL 3 ──────────────────────────────────────────── */
+    .tl-stats { display: flex; gap: 1px; background: var(--border); border-radius: var(--r-lg); overflow: hidden; margin-bottom: 3rem; max-width: 460px; }
+    .tl-stat { flex: 1; background: var(--bg-card); padding: 1.1rem 1.25rem; text-align: center; }
+    .tl-stat-num { font-size: 1.7rem; font-weight: 800; letter-spacing: -0.03em; background: linear-gradient(90deg, #fcd34d, var(--amber)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .tl-stat-lbl { font-size: 0.7rem; color: var(--slate); margin-top: 0.15rem; }
+    .timeline { display: flex; flex-direction: column; }
+    .tl-item { display: flex; gap: 1.75rem; position: relative; }
+    .tl-left { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; width: 48px; }
+    .tl-node { width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--amber); background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; z-index: 2; box-shadow: 0 0 20px rgba(245,158,11,0.2); }
+    .tl-spine { flex: 1; width: 2px; background: linear-gradient(180deg, rgba(245,158,11,0.5), rgba(245,158,11,0.1)); margin: 4px 0; }
+    .tl-item:last-child .tl-spine { display: none; }
+    .tl-content { padding-bottom: 2.5rem; flex: 1; }
+    .tl-phase { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--amber); margin-bottom: 0.25rem; margin-top: 0.65rem; }
+    .tl-heading { font-size: 1.25rem; font-weight: 700; color: var(--white); margin-bottom: 0.5rem; }
+    .tl-body { font-size: 0.875rem; color: var(--slate); margin-bottom: 1rem; line-height: 1.65; max-width: 560px; }
+    .tl-tasks { display: flex; flex-direction: column; gap: 0.35rem; }
+    .tl-task { display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; color: #d1d5db; }
+    .tl-task::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--amber); flex-shrink: 0; }
+
+    /* ─── PANEL 4 ──────────────────────────────────────────── */
+    .goals-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 1.1rem; }
+    .goal-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 1.4rem 1.5rem; transition: border-color 0.2s; }
+    .goal-card:hover { border-color: rgba(245,158,11,0.15); }
+    .goal-card.wide { grid-column: 1 / -1; background: linear-gradient(135deg, rgba(245,158,11,0.06), var(--bg-card)); border-color: rgba(245,158,11,0.18); }
+    .goal-icon  { font-size: 1.25rem; margin-bottom: 0.6rem; }
+    .goal-lbl   { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--amber); margin-bottom: 0.4rem; }
+    .goal-title { font-size: 0.95rem; font-weight: 700; color: var(--white); margin-bottom: 0.75rem; }
+    .goal-field {
+      width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: var(--r-sm); padding: 0.6rem 0.85rem; color: #e5e7eb;
+      font-family: inherit; font-size: 0.85rem; line-height: 1.55; resize: vertical; min-height: 52px; transition: border-color 0.2s, background 0.2s;
+    }
+    .goal-field:focus { outline: none; border-color: rgba(245,158,11,0.38); background: rgba(245,158,11,0.04); color: var(--white); }
+    .goal-field::placeholder { color: rgba(107,114,128,0.6); font-style: italic; }
+    .goals-actions { margin-top: 2rem; display: flex; gap: 0.75rem; flex-wrap: wrap; }
+    .btn { display: inline-flex; align-items: center; gap: 0.45rem; font-family: inherit; font-size: 0.84rem; font-weight: 700; padding: 0.65rem 1.25rem; border-radius: var(--r-md); border: none; cursor: pointer; transition: all 0.2s; }
+    .btn-primary { background: linear-gradient(135deg, var(--amber), var(--amber-lite)); color: #0d0d0d; box-shadow: 0 4px 18px rgba(245,158,11,0.28); }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(245,158,11,0.38); }
+    .btn-ghost { background: transparent; color: var(--slate); border: 1px solid var(--border-mid); }
+    .btn-ghost:hover { color: var(--white); border-color: rgba(255,255,255,0.18); }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+    @media (max-width: 640px) {
+      .topbar-row1 { padding: 0 1rem; }
+      .tab-nav { padding: 0 1rem; }
+      .panel { padding: 2.5rem 1rem 4rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── PASSWORD GATE ─────────────────────────────────────── -->
+<div id="gate">
+  <div class="gate-card">
+    <div class="gate-logo">M</div>
+    <div class="gate-title">Marathon Onboarding</div>
+    <p class="gate-sub">This deck is confidential.<br>Enter the password to continue.</p>
+
+    <div class="gate-input-wrap">
+      <input
+        class="gate-input"
+        id="gateInput"
+        type="password"
+        placeholder="Enter password"
+        autocomplete="current-password"
+        onkeydown="if(event.key==='Enter') checkPassword()"
+      />
+      <button class="gate-eye" id="gateEye" onclick="toggleEye()" title="Show/hide password" type="button">
+        <svg id="eyeIcon" width="17" height="17" viewBox="0 0 17 17" fill="none">
+          <path d="M1 8.5C1 8.5 3.5 3.5 8.5 3.5S16 8.5 16 8.5 13.5 13.5 8.5 13.5 1 8.5 1 8.5z" stroke="currentColor" stroke-width="1.3"/>
+          <circle cx="8.5" cy="8.5" r="2.2" stroke="currentColor" stroke-width="1.3"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="gate-error" id="gateError">&nbsp;</div>
+
+    <button class="gate-btn" onclick="checkPassword()">Enter</button>
+
+    <p class="gate-hint">Contact your Marathon lead if you need access.</p>
+  </div>
+</div>
+
+<!-- ─── MAIN APP (hidden until unlocked) ─────────────────── -->
+<div id="app">
+
+  <div class="topbar">
+    <div class="topbar-row1">
+      <div class="brand">Marathon Data Co.</div>
+      <div class="progress-wrap">
+        <span class="progress-label" id="progressLabel">0 / 4 sections complete</span>
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <span class="progress-pct" id="progressPct">0%</span>
+      </div>
+      <div class="progress-side">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+          <rect x="0.5" y="0.5" width="12" height="12" rx="3" stroke="currentColor" stroke-width="1.2"/>
+          <path d="M4 6.5l2 2 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Progress
+      </div>
+    </div>
+
+    <nav class="tab-nav">
+      <button class="tab-btn active" data-panel="intro" onclick="switchTab('intro')">
+        <span class="tab-dot"><svg class="tab-check" width="8" height="8" viewBox="0 0 8 8"><path d="M1.5 4l2 2 3-3" stroke="#0d0d0d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg><span class="tab-inner-dot"></span></span>
+        Introduction
+      </button>
+      <button class="tab-btn" data-panel="onboarding" onclick="switchTab('onboarding')">
+        <span class="tab-dot"><svg class="tab-check" width="8" height="8" viewBox="0 0 8 8"><path d="M1.5 4l2 2 3-3" stroke="#0d0d0d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg><span class="tab-inner-dot"></span></span>
+        Onboarding
+      </button>
+      <button class="tab-btn" data-panel="timeline" onclick="switchTab('timeline')">
+        <span class="tab-dot"><svg class="tab-check" width="8" height="8" viewBox="0 0 8 8"><path d="M1.5 4l2 2 3-3" stroke="#0d0d0d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg><span class="tab-inner-dot"></span></span>
+        Timeline
+      </button>
+      <button class="tab-btn" data-panel="goals" onclick="switchTab('goals')">
+        <span class="tab-dot"><svg class="tab-check" width="8" height="8" viewBox="0 0 8 8"><path d="M1.5 4l2 2 3-3" stroke="#0d0d0d" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg><span class="tab-inner-dot"></span></span>
+        Goals Alignment
+      </button>
+    </nav>
+  </div>
+
+  <div class="panels">
+
+    <!-- PANEL 1 — INTRO -->
+    <div class="panel active" id="panel-intro">
+      <div class="hero-logo">
+        <div class="hero-logo-mark">M</div>
+        <div class="hero-logo-name">Marathon</div>
+      </div>
+      <div class="amber-line"></div>
+      <p class="section-eyebrow">Client Onboarding — Confidential</p>
+      <h1 class="hero-headline">Performance marketing<br>that proves its <span class="grad">own value.</span></h1>
+      <p class="hero-sub">Marathon is an incrementality-first performance marketing company built to maximize true brand ROAS — not vanity metrics. We combine proprietary measurement software, full-funnel media execution, and creative production to drive outcomes you can actually prove.</p>
+      <div class="welcome-card">
+        <div class="welcome-emoji">👋</div>
+        <p>Welcome to the partnership, <strong>[CLIENT NAME]</strong>. This is your orientation guide — covering what we're building together, what to expect over your first 60 days, and exactly how we'll measure success along the way. We're glad you're here.</p>
+      </div>
+      <div class="intro-stats">
+        <div class="intro-stat"><div class="intro-stat-num">7</div><div class="intro-stat-label">Days to access</div></div>
+        <div class="intro-stat"><div class="intro-stat-num">30</div><div class="intro-stat-label">Days to launch</div></div>
+        <div class="intro-stat"><div class="intro-stat-num">60</div><div class="intro-stat-label">Days to first lift read</div></div>
+      </div>
+      <div class="panel-nav">
+        <button class="btn-next" onclick="switchTab('onboarding')">Onboarding Modules <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+    </div>
+
+    <!-- PANEL 2 — ONBOARDING -->
+    <div class="panel" id="panel-onboarding">
+      <div class="amber-line"></div>
+      <p class="section-eyebrow">Section 02 — Onboarding</p>
+      <h2 class="section-heading">What to Expect</h2>
+      <p class="section-sub">Your Marathon engagement is modular. Toggle below to mark which services are active for your account.</p>
+      <div class="module-controls">
+        <button class="mod-toggle on" data-mod="software"><span class="dot"></span> Marathon Software</button>
+        <button class="mod-toggle on" data-mod="funnel"><span class="dot"></span> Full Funnel Services</button>
+        <button class="mod-toggle on" data-mod="creative"><span class="dot"></span> Creative Generation</button>
+        <button class="mod-toggle on" data-mod="geo"><span class="dot"></span> Geo Holdouts</button>
+      </div>
+      <div class="modules-grid">
+        <div class="mod-card" data-mod="software" id="mod-software">
+          <div class="mod-stripe"></div>
+          <div class="mod-body">
+            <div class="mod-head"><div class="mod-icon">📊</div><span class="mod-badge on" id="badge-software">Active</span></div>
+            <div class="mod-title">Marathon Software</div>
+            <p class="mod-desc">Your dedicated performance intelligence platform — real-time dashboards, incrementality-adjusted ROAS, and reporting built for how your team actually makes decisions.</p>
+            <div class="mod-rows">
+              <div class="mod-row"><div class="mod-row-lbl">What it is</div><div class="mod-row-val">A proprietary SaaS dashboard giving you live access to campaign performance, channel-level spend efficiency, and incrementality-adjusted metrics — always on, always current.</div></div>
+              <div class="mod-row"><div class="mod-row-lbl">What we need from you</div><div class="mod-row-val">Ad platform credentials (read access), pixel or conversion event data, and a technical onboarding contact. Data access form shared Day 1.</div></div>
+              <div class="mod-row"><div class="mod-row-lbl">First 2 weeks</div><div class="mod-row-val">Account provisioned → data connections live → baseline audit delivered. Login access + guided walkthrough by end of Week 1.</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="mod-card" data-mod="funnel" id="mod-funnel">
+          <div class="mod-stripe"></div>
+          <div class="mod-body">
+            <div class="mod-head"><div class="mod-icon">🎯</div><span class="mod-badge on" id="badge-funnel">Active</span></div>
+            <div class="mod-title">Full Funnel Services</div>
+            <p class="mod-desc">End-to-end media strategy and execution across paid search, paid social, programmatic, and emerging channels — tuned for incrementality, not attribution credit.</p>
+            <div class="mod-rows">
+              <div class="mod-row"><div class="mod-row-lbl">What it is</div><div class="mod-row-val">Marathon acts as your performance media arm — building and executing channel strategy, managing campaign activation, and optimizing spend allocation against true ROAS signals.</div></div>
+              <div class="mod-row"><div class="mod-row-lbl">What we need from you</div><div class="mod-row-val">Monthly budget ranges, channel exclusions or existing vendor relationships, brand guidelines, and campaign history. Media brief template shared in Week 1.</div></div>
+              <div class="mod-row"><div class="mod-row-lbl">First 2 weeks</div><div class="mod-row-val">Channel audit complete → media plan drafted and reviewed → first campaigns structured for launch by Day 14. No spend goes live without your sign-off.</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="mod-card" data-mod="creative" id="mod-creative">
+          <div class="mod-stripe"></div>
+          <div class="mod-body">
+            <div class="mod-head"><div class="mod-icon">✦</div><span class="mod-badge on" id="badge-creative">Active</span></div>
+            <div class="mod-title">Creative Generation</div>
+            <p class="mod-desc">Performance-native ad creative — concepted, produced, and iterated by Marathon's creative team in lockstep with your media strategy. Built to test, not to hang in a gallery.</p>
+            <div class="mod-rows">
+              <div class="mod-row"><div class="mod-row-lbl">What it is</div><div class="mod-row-val">Full creative production including static, video, and motion across all active channels. Each asset ships with a testing hypothesis — creative decisions driven by data.</div></div>
+              <div class="mod-row"><div class="mod-row-lbl">What we need from you</div><div class="mod-row-val">Brand guidelines, existing asset library, tone-of-voice doc, and an approval stakeholder. Iteration cycles run on a 5-business-day turnaround once workflow is set up.</div></div>
+              <div class="mod-row"><div class="mod-row-lbl">First 2 weeks</div><div class="mod-row-val">Creative brief reviewed → first batch of 6–8 launch assets in review by Day 10. Approval workflow shared via [TOOL] on Day 1 of kickoff.</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="mod-card" data-mod="geo" id="mod-geo">
+          <div class="mod-stripe"></div>
+          <div class="mod-body">
+            <div class="mod-head"><div class="mod-icon">📍</div><span class="mod-badge on" id="badge-geo">Active</span></div>
+            <div class="mod-title">Geo Holdouts</div>
+            <p class="mod-desc">Scientifically rigorous incrementality measurement — pairing test markets against matched holdout regions to isolate the true causal lift of your media investment.</p>
+            <div class="mod-rows">
+              <div class="mod-row"><div class="mod-row-lbl">What it is</div><div class="mod-row-val">A geo-level matched-market test where selected DMAs receive media while comparable markets are held dark. The delta reveals your true incremental ROAS — no model dependency.</div></div>
+              <div class="mod-row"><div class="mod-row-lbl">What we need from you</div><div class="mod-row-val">Historical sales or conversion data by geography (DMA, ZIP, or state), regional constraints, and sign-off on test duration (typically 4–8 weeks minimum).</div></div>
+              <div class="mod-row"><div class="mod-row-lbl">First 2 weeks</div><div class="mod-row-val">Test market analysis run → holdout pairs selected and reviewed → test design document shared for sign-off. Execution begins with first media live date.</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="panel-nav">
+        <button class="btn-next" onclick="switchTab('timeline')">Timeline <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+    </div>
+
+    <!-- PANEL 3 — TIMELINE -->
+    <div class="panel" id="panel-timeline">
+      <div class="amber-line"></div>
+      <p class="section-eyebrow">Section 03 — Timeline</p>
+      <h2 class="section-heading">Your First Wins</h2>
+      <p class="section-sub">From kickoff to first insights — a clear view of where we're going and when you'll start seeing results.</p>
+      <div class="tl-stats">
+        <div class="tl-stat"><div class="tl-stat-num">7</div><div class="tl-stat-lbl">Days to access</div></div>
+        <div class="tl-stat"><div class="tl-stat-num">30</div><div class="tl-stat-lbl">Days to launch</div></div>
+        <div class="tl-stat"><div class="tl-stat-num">60</div><div class="tl-stat-lbl">Days to lift read</div></div>
+      </div>
+      <div class="timeline">
+        <div class="tl-item">
+          <div class="tl-left"><div class="tl-node">🚀</div><div class="tl-spine"></div></div>
+          <div class="tl-content">
+            <div class="tl-phase">Week 1</div>
+            <div class="tl-heading">Kickoff & Access</div>
+            <p class="tl-body">We hit the ground running — onboarding calls completed, platform credentials shared, and your baseline data pull underway. No waiting around.</p>
+            <div class="tl-tasks">
+              <div class="tl-task">Kickoff call with your Marathon pod</div>
+              <div class="tl-task">Platform access provisioned & credentials transferred</div>
+              <div class="tl-task">Baseline performance audit initiated</div>
+              <div class="tl-task">Channel audit and media brief shared</div>
+              <div class="tl-task">Geo data pull requested</div>
+            </div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-left"><div class="tl-node">📈</div><div class="tl-spine"></div></div>
+          <div class="tl-content">
+            <div class="tl-phase">First 30 Days</div>
+            <div class="tl-heading">Campaigns Live & Test Designed</div>
+            <p class="tl-body">Your first campaigns launch, early creative goes into rotation, and the incrementality test is fully designed and signed off. Initial signals start coming in.</p>
+            <div class="tl-tasks">
+              <div class="tl-task">First paid campaigns activated across channels</div>
+              <div class="tl-task">Creative batch 1 live and in-flight testing</div>
+              <div class="tl-task">Geo holdout test design finalized & approved</div>
+              <div class="tl-task">First campaign performance review sync</div>
+              <div class="tl-task">Early signal report — directional ROAS vs. target</div>
+            </div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-left"><div class="tl-node">🏆</div><div class="tl-spine"></div></div>
+          <div class="tl-content">
+            <div class="tl-phase">First 60 Days</div>
+            <div class="tl-heading">Incrementality Results & Lift Visible</div>
+            <p class="tl-body">Incrementality test results are in, brand ROAS lift is measurable, and your first full optimization cycle kicks off based on what the data shows.</p>
+            <div class="tl-tasks">
+              <div class="tl-task">Geo holdout results read-out delivered</div>
+              <div class="tl-task">True incremental ROAS vs. attributed ROAS comparison</div>
+              <div class="tl-task">Brand ROAS lift quantified by channel</div>
+              <div class="tl-task">Budget reallocation recommendations presented</div>
+              <div class="tl-task">90-day optimization roadmap built and shared</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="panel-nav">
+        <button class="btn-next" onclick="switchTab('goals')">Goals Alignment <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+    </div>
+
+    <!-- PANEL 4 — GOALS -->
+    <div class="panel" id="panel-goals">
+      <div class="amber-line"></div>
+      <p class="section-eyebrow">Section 04 — Goals Alignment</p>
+      <h2 class="section-heading">What Are We Building Toward?</h2>
+      <p class="section-sub">Fill in the fields below — or complete this with your Marathon lead on the kickoff call. This becomes the shared north star for your engagement.</p>
+      <div class="goals-grid">
+        <div class="goal-card wide">
+          <div class="goal-icon">🎯</div>
+          <div class="goal-lbl">Primary KPI</div>
+          <div class="goal-title">What does winning look like?</div>
+          <textarea class="goal-field" rows="2" placeholder="e.g. Incremental ROAS ≥ 3.5x across paid social within 60 days…"></textarea>
+        </div>
+        <div class="goal-card">
+          <div class="goal-icon">📊</div>
+          <div class="goal-lbl">Secondary KPIs</div>
+          <div class="goal-title">Supporting metrics that matter</div>
+          <textarea class="goal-field" rows="3" placeholder="e.g. CPA ≤ $40, brand search lift ≥ 15%, new customer rate ≥ 60%…"></textarea>
+        </div>
+        <div class="goal-card">
+          <div class="goal-icon">⚠️</div>
+          <div class="goal-lbl">Known Constraints</div>
+          <div class="goal-title">Guardrails & sensitivities</div>
+          <textarea class="goal-field" rows="3" placeholder="e.g. No spend in Q4 blackout weeks, competitor exclusions, brand safety requirements…"></textarea>
+        </div>
+        <div class="goal-card">
+          <div class="goal-icon">🏁</div>
+          <div class="goal-lbl">90-Day Definition of Success</div>
+          <div class="goal-title">How we'll know it's working</div>
+          <textarea class="goal-field" rows="3" placeholder="e.g. Proved incrementality across 2+ channels, budget expanded 20%…"></textarea>
+        </div>
+        <div class="goal-card">
+          <div class="goal-icon">📏</div>
+          <div class="goal-lbl">Benchmarks to Beat</div>
+          <div class="goal-title">Existing tests or baselines</div>
+          <textarea class="goal-field" rows="3" placeholder="e.g. Current blended ROAS 2.1x, prior agency had 4.5wk creative turnaround…"></textarea>
+        </div>
+      </div>
+      <div class="goals-actions">
+        <button class="btn btn-primary" onclick="saveGoals()">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 9.5v2.5h10V9.5M7 2v7M4.5 6.5L7 9l2.5-2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Save Goals Doc
+        </button>
+        <button class="btn btn-ghost" onclick="clearGoals()">Clear all</button>
+      </div>
+    </div>
+
+  </div><!-- /panels -->
+</div><!-- /app -->
+
+<script>
+  // ─── PASSWORD GATE ───────────────────────────────────────
+  const CORRECT = 'marathon2026';
+
+  function checkPassword() {
+    const input = document.getElementById('gateInput');
+    const errorEl = document.getElementById('gateError');
+    const val = input.value.trim();
+
+    if (val === CORRECT) {
+      const gate = document.getElementById('gate');
+      gate.style.opacity = '0';
+      gate.style.transition = 'opacity 0.4s ease';
+      setTimeout(() => {
+        gate.style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+      }, 400);
+    } else {
+      errorEl.textContent = 'Incorrect password. Try again.';
+      input.classList.add('error');
+      input.value = '';
+      setTimeout(() => {
+        input.classList.remove('error');
+        errorEl.innerHTML = '&nbsp;';
+      }, 2000);
+      input.focus();
+    }
+  }
+
+  function toggleEye() {
+    const input = document.getElementById('gateInput');
+    const isPassword = input.type === 'password';
+    input.type = isPassword ? 'text' : 'password';
+    document.getElementById('gateEye').style.color = isPassword ? '#f59e0b' : '';
+  }
+
+  // Focus input on load
+  window.addEventListener('load', () => {
+    document.getElementById('gateInput').focus();
+  });
+
+  // ─── TABS & PROGRESS ─────────────────────────────────────
+  const visited = new Set(['intro']);
+  const tabOrder = ['intro', 'onboarding', 'timeline', 'goals'];
+
+  function switchTab(id) {
+    const currentActive = document.querySelector('.tab-btn.active');
+    if (currentActive && currentActive.dataset.panel !== id) {
+      currentActive.classList.remove('active');
+      currentActive.classList.add('done');
+      visited.add(currentActive.dataset.panel);
+    }
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(t => {
+      if (t.dataset.panel === id) { t.classList.remove('done'); t.classList.add('active'); }
+    });
+    const panel = document.getElementById('panel-' + id);
+    if (panel) panel.classList.add('active');
+    visited.add(id);
+    updateProgress();
+    const activeBtn = document.querySelector('.tab-btn.active');
+    if (activeBtn) activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function updateProgress() {
+    const total = tabOrder.length;
+    const done = tabOrder.filter(id => visited.has(id)).length;
+    const pct = Math.round((done / total) * 100);
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressPct').textContent = pct + '%';
+    document.getElementById('progressLabel').textContent = done + ' / ' + total + ' sections complete';
+  }
+
+  // ─── MODULE TOGGLES ───────────────────────────────────────
+  document.querySelectorAll('.mod-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const mod = btn.dataset.mod;
+      const card = document.getElementById('mod-' + mod);
+      const badge = document.getElementById('badge-' + mod);
+      const isOn = btn.classList.contains('on');
+      btn.classList.toggle('on', !isOn);
+      if (card) card.classList.toggle('off', isOn);
+      if (badge) { badge.textContent = isOn ? 'Inactive' : 'Active'; badge.className = 'mod-badge ' + (isOn ? 'off' : 'on'); }
+    });
+  });
+
+  // ─── GOALS ────────────────────────────────────────────────
+  function saveGoals() {
+    const fields = document.querySelectorAll('.goal-field');
+    const labels = ['PRIMARY KPI', 'SECONDARY KPIs', 'KNOWN CONSTRAINTS', '90-DAY SUCCESS', 'BENCHMARKS TO BEAT'];
+    let content = '=== MARATHON — GOALS ALIGNMENT ===\nClient: [CLIENT NAME]\nDate: ' + new Date().toLocaleDateString() + '\n\n';
+    fields.forEach((f, i) => { content += (labels[i] || 'FIELD ' + (i+1)) + ':\n' + (f.value.trim() || '[Not filled in]') + '\n\n'; });
+    content += '\nMarathon Data Co. — Confidential';
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([content], { type: 'text/plain' }));
+    a.download = 'marathon-goals.txt';
+    a.click();
+  }
+
+  function clearGoals() {
+    if (confirm('Clear all goals fields?')) {
+      document.querySelectorAll('.goal-field').forEach(f => f.value = '');
+    }
+  }
+
+  updateProgress();
+</script>
+</body>
+</html>
